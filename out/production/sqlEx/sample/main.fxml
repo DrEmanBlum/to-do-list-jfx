@@ -14,8 +14,24 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.control.cell.PropertyValueFactory?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.SeparatorMenuItem?>
+<?import javafx.scene.control.ToolBar?>
 <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0"
             fx:controller="sample.Controller" fx:id="mainBorderPane" xmlns:fx="http://javafx.com/fxml/1">
+    <top>
+        <VBox>
+            <MenuBar>
+                <Menu text="File">
+                    <items>
+                        <MenuItem text="Add task" onAction="#addTask"/>
+                    </items>
+                </Menu>
+            </MenuBar>
+        </VBox>
+    </top>
     <left>
         <TableView fx:id="taskTable" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
             <columns>
@@ -46,16 +62,11 @@
     </center>
     <bottom>
         <HBox alignment="CENTER" prefHeight="40.0" prefWidth="170.00" spacing="5.0" BorderPane.alignment="CENTER">
-            <children>
-                <Button maxWidth="Infinity" onAction="#listTasks" mnemonicParsing="false" text="List all Tasks" />
-                <Button maxWidth="Infinity" onAction="#addTask" mnemonicParsing="false" text="Add Task" />
                 <ProgressBar fx:id="progressBar" prefWidth="200.0" progress="0.0">
                     <HBox.margin>
                         <Insets left="50.0" />
                     </HBox.margin>
                 </ProgressBar>
-            </children>
-
         </HBox>
     </bottom>
 </BorderPane>

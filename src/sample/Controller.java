@@ -4,24 +4,21 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.chart.PieChart;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.paint.Color;
-import javafx.util.Callback;
 import sample.model.DataSource;
 import sample.model.Task;
 
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 public class Controller {
 
@@ -47,6 +44,7 @@ public class Controller {
     @FXML
     private HBox deadLineHBox;
 
+    javafx.concurrent.Task<ObservableList<Task>> threadTask;
     //Similar to Android's onCreate()
     public void initialize()
     {
@@ -56,52 +54,36 @@ public class Controller {
         MenuItem deleteMenuItem = new MenuItem("Delete");
         MenuItem editMenuItem = new MenuItem("Edit");
         //Creates an Event handler for the delete button
-        deleteMenuItem.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                deleteTask();
-            }
-        });
+        deleteMenuItem.setOnAction(actionEvent -> deleteTask());
 
         listContextMenu.getItems().addAll(deleteMenuItem);
-        taskTable.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Task>() {
-            @Override
-            public void changed(ObservableValue<? extends Task> observableValue, Task task, Task t1) {
+        taskTable.getSelectionModel().selectedItemProperty().addListener((observableValue, task, t1) -> {
+                taskTable.refresh();
                 Task item = taskTable.getSelectionModel().getSelectedItem();
-                itemDetailsTextArea.setText(item.getTaskDescription());
-                LocalDate deadLine = item.getEndDate();
-                if (!deadLine.equals(LocalDate.MAX)) {
-                    deadLineHBox.setVisible(true);
-                    deadlineLabel.setText(item.getEndDate().toString());
+                if (item != null) {
+                    itemDetailsTextArea.setText(item.getTaskDescription());
+                    LocalDate deadLine = item.getEndDate();
+                    if (!deadLine.equals(LocalDate.MAX)) {
+                        deadLineHBox.setVisible(true);
+                        deadlineLabel.setText(item.getEndDate().toString());
+                    } else {
+                        deadLineHBox.setVisible(false);
+                    }
                 }
-                else
-                {
-                    deadLineHBox.setVisible(false);
-                }
+            });
+
+        taskTable.addEventHandler(MouseEvent.MOUSE_CLICKED, mouseEvent -> {
+            if (mouseEvent.getButton().equals(MouseButton.SECONDARY))
+            {
+                listContextMenu.show(taskTable,mouseEvent.getScreenX(),mouseEvent.getScreenY());
             }
         });
-
-        taskTable.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent mouseEvent) {
-                if (mouseEvent.getButton().equals(MouseButton.SECONDARY))
-                {
-                    listContextMenu.show(taskTable,mouseEvent.getScreenX(),mouseEvent.getScreenY());
-                }
+        taskTable.addEventHandler(MouseEvent.MOUSE_CLICKED, mouseEvent -> {
+            if (mouseEvent.getButton().equals(MouseButton.PRIMARY))
+            {
+                listContextMenu.hide();
             }
         });
-        taskTable.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent mouseEvent) {
-                if (mouseEvent.getButton().equals(MouseButton.PRIMARY))
-                {
-                    listContextMenu.hide();
-                }
-            }
-        });
-
-
-
 
         taskTable.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
         deadLineHBox.setVisible(false);
@@ -112,7 +94,7 @@ public class Controller {
     @FXML
     public void listTasks()
     {
-        javafx.concurrent.Task<ObservableList<Task>> threadTask = new GetAllTasks();
+            threadTask = new GetAllTasks();
             taskTable.itemsProperty().bind(threadTask.valueProperty());
             progressBar.progressProperty().bind(threadTask.progressProperty());
             progressBar.setVisible(true);
@@ -130,11 +112,14 @@ public class Controller {
     @FXML
     public void deleteTask()
     {
-        listContextMenu.hide();
         Task item = taskTable.getSelectionModel().getSelectedItem();
         if (!(item == null)) {
             DataSource.getInstance().deleteTask(item);
-//            listTasks();
+            try {
+                threadTask.get().remove(item);
+            } catch (InterruptedException | ExecutionException e) {
+                System.out.println(e.getMessage());
+            }
         }
     }
 
@@ -169,11 +154,12 @@ public class Controller {
 
         //Wait for Input
         Optional<ButtonType> result = dialog.showAndWait();
-        if (result.isPresent() && result.get() ==ButtonType.OK)
+        if (result.isPresent() && result.get() == ButtonType.OK)
         {
             //Run proccessResult() method from AddTaskController class and refresh the list
             AddTaskController controller = fxmlLoader.getController();
             controller.processResults();
+            taskTable.refresh();
             listTasks();
         }
 
