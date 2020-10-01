@@ -15,8 +15,8 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception{
         FXMLLoader loader = new FXMLLoader(getClass().getResource("main.fxml"));
         Parent root = loader.load();
-//        Controller controller = loader.getController();
-//        controller.listTasks();
+        Controller controller = loader.getController();
+        controller.listTasks();
         primaryStage.setScene(new Scene(root, 640, 480));
         primaryStage.show();
     }

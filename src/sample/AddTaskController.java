@@ -6,10 +6,7 @@ import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import sample.model.DataSource;
-import sample.model.Task;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 public class AddTaskController {
 
@@ -29,8 +26,12 @@ public class AddTaskController {
     public void processResults() {
         String shortDescription = shortDescriptionField.getText().trim();
         String details = detailsArea.getText().trim();
+        if (details.isEmpty() && shortDescription.isEmpty())
+        {
+            return;
+        }
         String date;
-        if (toggleDate.isSelected())
+        if (toggleDate.isSelected() || (deadlinePicker.getValue() == null))
         date = "none";
         else
             date = deadlinePicker.getValue().toString();
@@ -41,13 +42,6 @@ public class AddTaskController {
     @FXML
     public void setToggleDate()
     {
-        if (toggleDate.isSelected())
-        {
-            deadlinePicker.setDisable(true);
-        }
-        else
-        {
-            deadlinePicker.setDisable(false);
-        }
+        deadlinePicker.setDisable(toggleDate.isSelected());
     }
 }
